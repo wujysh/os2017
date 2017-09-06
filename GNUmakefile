@@ -106,7 +106,7 @@ GCC_LIB := $(shell $(CC) $(CFLAGS) -print-libgcc-file-name)
 OBJDIRS :=
 
 # Make sure that 'all' is the first target
-all:
+all: warn
 
 # Eliminate default suffix rules
 .SUFFIXES:
@@ -140,13 +140,13 @@ include kern/Makefrag
 
 QEMUOPTS = -drive file=$(OBJDIR)/kern/kernel.img,index=0,media=disk,format=raw -serial mon:stdio -gdb tcp::$(GDBPORT)
 QEMUOPTS += $(shell if $(QEMU) -nographic -help | grep -q '^-D '; then echo '-D qemu.log'; fi)
-IMAGES = $(OBJDIR)/kern/kernel.img
+IMAGES = warn $(OBJDIR)/kern/kernel.img
 QEMUOPTS += $(QEMUEXTRA)
 
 .gdbinit: .gdbinit.tmpl
 	sed "s/localhost:1234/localhost:$(GDBPORT)/" < $^ > $@
 
-gdb:
+gdb: warn
 	gdb -n -x .gdbinit
 
 pre-qemu: .gdbinit
@@ -283,7 +283,7 @@ tarball-pref: handin-check
 	rm lab$(LAB)-handin.tar
 	rm /tmp/lab$(LAB)diff.patch
 
-myapi.key:
+myapi.key: warn
 	@echo Get an API key for yourself by visiting $(WEBSUB)/
 	@read -p "Please enter your API key: " k; \
 	if test `echo -n "$$k" |wc -c` = 32 ; then \
@@ -300,6 +300,14 @@ myapi.key:
 		echo An API key should be 32 characters long.; \
 		false; \
 	fi;
+
+warn:
+	@echo; \
+	echo "[31m******* WARNING *********"; \
+	echo "this is the 2016 6.828 lab"; \
+	echo "******* WARNING ********* [39m"; \
+	echo; \
+	false;
 
 #handin-prep:
 #	@./handin-prep
@@ -319,4 +327,5 @@ always:
 	@:
 
 .PHONY: all always \
-	handin git-handin tarball tarball-pref clean realclean distclean grade handin-prep handin-check
+	handin git-handin tarball tarball-pref clean realclean distclean grade handin-prep handin-check \
+	warn
