@@ -85,6 +85,8 @@ PERL	:= perl
 # Only optimize to -O1 to discourage inlining, which complicates backtraces.
 CFLAGS := $(CFLAGS) $(DEFS) $(LABDEFS) -O1 -fno-builtin -I$(TOP) -MD
 CFLAGS += -fno-omit-frame-pointer
+CFLAGS += -std=gnu99
+CFLAGS += -static
 CFLAGS += -Wall -Wno-format -Wno-unused -Werror -gstabs -m32
 # -fno-tree-ch prevented gcc from sometimes reordering read_ebp() before
 # mon_backtrace()'s function prologue on gcc version: (Debian 4.7.2-5) 4.7.2
@@ -135,6 +137,8 @@ $(OBJDIR)/.vars.%: FORCE
 # Include Makefrags for subdirectories
 include boot/Makefrag
 include kern/Makefrag
+include lib/Makefrag
+include user/Makefrag
 
 
 QEMUOPTS = -drive file=$(OBJDIR)/kern/kernel.img,index=0,media=disk,format=raw -serial mon:stdio -gdb tcp::$(GDBPORT)
@@ -146,7 +150,7 @@ QEMUOPTS += $(QEMUEXTRA)
 	sed "s/localhost:1234/localhost:$(GDBPORT)/" < $^ > $@
 
 gdb:
-	gdb -x .gdbinit
+	gdb -n -x .gdbinit
 
 pre-qemu: .gdbinit
 
@@ -217,7 +221,7 @@ git-handin: handin-check
 		false; \
 	fi
 
-WEBSUB := https://ccutler.scripts.mit.edu/6.828/handin.py
+WEBSUB := https://6828.scripts.mit.edu/2016/handin.py
 
 handin: tarball-pref myapi.key
 	@SUF=$(LAB); \
@@ -250,8 +254,15 @@ handin-check:
 		test "$$r" = y; \
 	fi
 
+UPSTREAM := $(shell git remote -v | grep "pdos.csail.mit.edu/6.828/2016/jos.git (fetch)" | awk '{split($$0,a," "); print a[1]}')
+
 tarball: handin-check
-	git archive --format=tar HEAD | gzip > lab$(LAB)-handin.tar.gz
+	git archive --format=tar HEAD > lab$(LAB)-handin.tar
+	git diff $(UPSTREAM)/lab$(LAB) > /tmp/lab$(LAB)diff.patch
+	tar -rf lab$(LAB)-handin.tar /tmp/lab$(LAB)diff.patch
+	gzip -c lab$(LAB)-handin.tar > lab$(LAB)-handin.tar.gz
+	rm lab$(LAB)-handin.tar
+	rm /tmp/lab$(LAB)diff.patch
 
 tarball-pref: handin-check
 	@SUF=$(LAB); \
@@ -268,10 +279,15 @@ tarball-pref: handin-check
 	else \
 		rm -f .suf; \
 	fi; \
-	git archive --prefix=lab$(LAB)/ --format=tar HEAD | gzip > lab$$SUF-handin.tar.gz
+	git archive --format=tar HEAD > lab$(LAB)-handin.tar
+	git diff $(UPSTREAM)/lab$(LAB) > /tmp/lab$(LAB)diff.patch
+	tar -rf lab$(LAB)-handin.tar /tmp/lab$(LAB)diff.patch
+	gzip -c lab$(LAB)-handin.tar > lab$(LAB)-handin.tar.gz
+	rm lab$(LAB)-handin.tar
+	rm /tmp/lab$(LAB)diff.patch
 
 myapi.key:
-	@echo Get an API key for yourself by visiting $(WEBSUB)
+	@echo Get an API key for yourself by visiting $(WEBSUB)/
 	@read -p "Please enter your API key: " k; \
 	if test `echo -n "$$k" |wc -c` = 32 ; then \
 		TF=`mktemp -t tmp.XXXXXX`; \
@@ -291,6 +307,22 @@ myapi.key:
 #handin-prep:
 #	@./handin-prep
 
+# For test runs
+
+prep-%:
+	$(V)$(MAKE) "INIT_CFLAGS=${INIT_CFLAGS} -DTEST=`case $* in *_*) echo $*;; *) echo user_$*;; esac`" $(IMAGES)
+
+run-%-nox-gdb: prep-% pre-qemu
+	$(QEMU) -nographic $(QEMUOPTS) -S
+
+run-%-gdb: prep-% pre-qemu
+	$(QEMU) $(QEMUOPTS) -S
+
+run-%-nox: prep-% pre-qemu
+	$(QEMU) -nographic $(QEMUOPTS)
+
+run-%: prep-% pre-qemu
+	$(QEMU) $(QEMUOPTS)
 
 # This magic automatically generates makefile dependencies
 # for header files included from C source files we compile,
