@@ -116,7 +116,13 @@ env_init(void)
 {
 	// Set up envs array
 	// LAB 1: Your code here.
-
+    int i;
+    for (i = NENV-1; i >= 0; i--) {
+        // initialize backwars to maintain the order
+        envs[i].env_id = 0;
+        envs[i].env_link = env_free_list;
+        env_free_list = envs + i;
+    }
 	// Per-CPU part of the initialization
 	env_init_percpu();
 }
@@ -373,6 +379,9 @@ void
 env_create(uint8_t *binary, enum EnvType type)
 {
 	// LAB 1: Your code here.
+	struct Env *penv;
+	env_alloc(&penv, 0);
+	load_icode(penv, binary);
 }
 
 //
@@ -490,6 +499,15 @@ env_run(struct Env *e)
 
 	// LAB 1: Your code here.
 
-	panic("env_run not yet implemented");
+	//panic("env_run not yet implemented");
+	if (e->env_status == ENV_RUNNING) {
+	    e->env_status = ENV_RUNNABLE;
+	}
+	curenv = e;
+	e->env_status = ENV_RUNNING;
+	e->env_runs++;
+	lcr3(PADDR(e->env_pgdir));
+	
+	env_pop_tf(&e->env_tf);
 }
 
