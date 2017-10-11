@@ -504,7 +504,14 @@ env_run(struct Env *e)
 	//	e->env_tf to sensible values.
 
 	// LAB 1: Your code here.
-
-	panic("env_run not yet implemented");
+	if(curenv != NULL && curenv->env_status == ENV_RUNNING){
+		curenv->env_status = ENV_RUNNABLE;
+	}
+	curenv = e;
+	curenv->env_status = ENV_RUNNING;
+	curenv->env_runs++;
+	lcr3(*(curenv->env_pgdir));
+	env_pop_tf(&(curenv->env_tf));
+	//panic("env_run not yet implemented");
 }
 

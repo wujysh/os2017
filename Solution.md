@@ -29,3 +29,11 @@ in `env_create()`
 I create a new Env** to do the job. Is it OK?
 `env_alloc()` will create a new environment and store it in the first parameter which is a Env**.
  set env_type to what? only one choice now.
+
+ in `env_run()`
+ This function does context switch from curenv to e. 
+ curenv is the old environment and e is the new one. 
+ Call two functions to do sth. Follow the comment.
+ Notice curenv can be NULL so it must be check before dereference.
+ Q: what does "set the relevant parts of e->env_tf to sensible values" mean?
+ env_tf is a complex struct called TrapFrame inside struct Env. 
