@@ -118,7 +118,7 @@ env_init(void)
 	// LAB 1: Your code here.
 	size_t sizeOfEnvs = sizeof(envs)/sizeof(*envs);
 	for(size_t t = 0; t < sizeOfEnvs; t++){
-		
+
 		envs[t].env_status = ENV_FREE;
 		envs[t].env_id = 0;
 
@@ -384,6 +384,10 @@ void
 env_create(uint8_t *binary, enum EnvType type)
 {
 	// LAB 1: Your code here.
+	Env** new_env = NULL;
+	env_alloc(new_env, 0);
+	load_icode(new_env[0], binary);
+	new_env[0]->env_type = ENV_TYPE_USER;
 }
 
 //

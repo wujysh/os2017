@@ -20,6 +20,12 @@ struct Env {
 ```
 
 - deal with kern/env.c
+in `env_init()`
 `envs` is a struct Env array. Mark its elements as is told in the comment. 
 All elements need to be linked in `env_free_list` by linking them via a loop.
 `env_alloc()` will assign `env_free_list` to `e` and returns it. So the first time it will make `e` the first element in the `env_free_list` - envs[0].
+
+in `env_create()`
+I create a new Env** to do the job. Is it OK?
+`env_alloc()` will create a new environment and store it in the first parameter which is a Env**.
+ set env_type to what? only one choice now.
