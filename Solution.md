@@ -26,7 +26,7 @@ All elements need to be linked in `env_free_list` by linking them via a loop.
 `env_alloc()` will assign `env_free_list` to `e` and returns it. So the first time it will make `e` the first element in the `env_free_list` - envs[0].
 
 in `env_create()`
-I create a new Env** to do the job. Is it OK?
+Q: I create a new Env** to do the job. Is it OK?
 `env_alloc()` will create a new environment and store it in the first parameter which is a Env**.
  set env_type to what? only one choice now.
 
@@ -37,3 +37,19 @@ I create a new Env** to do the job. Is it OK?
  Notice curenv can be NULL so it must be check before dereference.
  Q: what does "set the relevant parts of e->env_tf to sensible values" mean?
  env_tf is a complex struct called TrapFrame inside struct Env. 
+
+
+- deal with kern/pmap.c
+in `mem_init()`
+line 160
+Follow the codes above. 
+`boot_alloc()` is the physical memory allocator only used for initialization. 
+Use it like melloc function.
+
+line 192
+`boot_map_region()` used to map physical address to virtual address. 
+Follow the case above and below. The comment is very similar.
+Permission follows.
+The "linear address" is given, `UENVS`. 
+The physical address is gained by calling `PADDR()` with env as parameter. 
+Q : The third parameter, size_t, should be the length of the array env ? 
