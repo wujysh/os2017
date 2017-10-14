@@ -53,3 +53,20 @@ Permission follows.
 The "linear address" is given, `UENVS`. 
 The physical address is gained by calling `PADDR()` with env as parameter. 
 Q : The third parameter, size_t, should be the length of the array env ? 
+
+- deal with kern/trap.c
+in `trap_dispatch()`
+In order to call the function `syscall()` in kern/syscall.c, we need five uint32_t parameters and the first syscallno parameter. 
+Notice that the five types of system calls are defined in inc/syscall.h and they are all enum numbers. 
+but i cannot find more things about system call in kern/trap.h which defines the trapframe.
+The definition of the generic `syscall()` is found in lib/syscall.c from which we know the five parameters are in "DX, CX, BX, DI, SI" and the first parameter is in "AX". And they are the REGISTERS!!! (defined in inc/trap.h)
+So all paramters of `syscall()` are clear.
+As for the return type, notice that in lib/syscall.c `syscall()` the return value ret is associated with "a" which represents register eax in the assembly language. 
+So it is very likely that the return type of syscall function is the the same as the first paramter. 
+But the return type is int32_t. if ret>0 it will invoke a panic. 
+So ret should be a non-positive number. 
+Condidering these, i have the returned value assigned to register eax.
+
+
+
+
