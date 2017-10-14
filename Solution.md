@@ -67,6 +67,15 @@ But the return type is int32_t. if ret>0 it will invoke a panic.
 So ret should be a non-positive number. 
 Condidering these, i have the returned value assigned to register eax.
 
+- deal with kern/syscall.c
+in `syscall()`
+we must call another `sysacll()` from lib/syscall.c. 
+
+- look at lib/syscall.c
+Below the generic syscall function, there are several specific functions that call the generic one to do specific jobs. And the first param they pass into syscall() is not their name(although they are the same), but the enum number defined in inc/syscall.h. 
+
+- back in kern/syscall.c
+So the solution is clear - depending on which syscallno we use, different specific syscall functions are called. That is the switch-case statement. 
 
 
 
