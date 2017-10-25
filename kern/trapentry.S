@@ -4,6 +4,7 @@
 #include <inc/memlayout.h>
 #include <inc/trap.h>
 
+#include <kern/picirq.h>
 
 
 ###################################################################
@@ -81,4 +82,4 @@ _alltraps:
 	popl %es
 	pushl %esp
 	call trap
-	
+
