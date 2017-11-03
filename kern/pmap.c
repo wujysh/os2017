@@ -264,7 +264,14 @@ mem_init_mp(void)
 	//     Permissions: kernel RW, user NONE
 	//
 	// LAB 4: Your code here:
-
+	int i;
+	for (i = 0; i < NCPU; ++i) {
+		boot_map_region(kern_pgdir, 
+			KSTACKTOP - KSTKSIZE - i * (KSTKSIZE + KSTKGAP), 
+			KSTKSIZE, 
+			PADDR(percpu_kstacks[i]), 
+			PTE_W);
+	}
 }
 
 // --------------------------------------------------------------
@@ -304,7 +311,7 @@ page_init(void)
 	// NB: DO NOT actually touch the physical memory corresponding to
 	// free pages!
 	size_t i;
-	for (i = 1; i < npages_basemem; i++) {
+	for (i = 1; i < MPENTRY_PADDR/PGSIZE; i++) {
 		pages[i].pp_ref = 0;
 		pages[i].pp_link = page_free_list;
 		page_free_list = &pages[i];
@@ -337,6 +344,7 @@ page_alloc(int alloc_flags)
 		page_free_list = page_free_list->pp_link;
 		if (alloc_flags & ALLOC_ZERO) 
 			memset(page2kva(ret), 0, PGSIZE);
+		ret->pp_link = NULL;
 		return ret;
 	}
 	return NULL;
@@ -396,7 +404,7 @@ pgdir_walk(pde_t *pgdir, const void *va, int create)
 			struct PageInfo *pg = page_alloc(ALLOC_ZERO);  // alloc a zero page
 			if (!pg) return NULL;  // allocation fails
 			pg->pp_ref++;
-			pgdir[dindex] = page2pa(pg) | PTE_P | PTE_U | PTE_W;	
+			pgdir[dindex] = page2pa(pg) | PTE_P | PTE_U | PTE_W;
 		} else return NULL;
 	}
 	pte_t *p = KADDR(PTE_ADDR(pgdir[dindex]));
@@ -560,7 +568,14 @@ mmio_map_region(physaddr_t pa, size_t size)
 	// Hint: The staff solution uses boot_map_region.
 	//
 	// Your code here:
-	panic("mmio_map_region not implemented");
+	//panic("mmio_map_region not implemented");
+	size = ROUNDUP(pa+size, PGSIZE);
+	pa = ROUNDDOWN(pa, PGSIZE);
+	size -= pa;
+	if (base+size >= MMIOLIM) panic("not enough memory");
+	boot_map_region(kern_pgdir, base, size, pa, PTE_PCD|PTE_PWT|PTE_W);
+	base += size;
+	return (void*) (base - size);
 }
 
 static uintptr_t user_mem_check_addr;
